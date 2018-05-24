@@ -29,6 +29,9 @@ volatile bool mem_c=false;
 volatile bool mem_m=false;
 volatile bool mem_l=false;
 volatile unsigned int mem2=0;
+
+volatile int cont_vibrar=0;
+volatile bool funcion=false;
  
 /*Crear el objeto de la clase NewPing*/
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -42,30 +45,57 @@ void selec_opc_salida(){
     if (val_pulsador== LOW)
     {
       mem=true;
-      switch(opc_salida){
-        case 0:
-        opc_salida=1;
-        Serial.println("Opcion vibracion");
-        break;
-        case 1:
-        opc_salida=2;
-        Serial.println("Opcion s");
-        break;
-        case 2:
-        opc_salida=3;
-        Serial.println("Ambas opciones");
-        break;
-        case 3:
-        opc_salida=0;
-        Serial.println("Sin salida");
-        break;
-        delay(300);
+      if(cont_vibrar>=30 && funcion==false){
+        funcion=true;
+        cont_vibrar=0;
+        
       }
+      else if(cont_vibrar>=30 && funcion==true){
+        funcion=false;
+        cont_vibrar=0;
+      }
+
+      if (funcion==false){
+        switch(opc_salida){
+          case 0:
+          opc_salida=1;
+          Serial.println("Opcion sonido");
+          break;
+          case 1:
+          opc_salida=0;
+          Serial.println("apagado");
+          break;
+          default:
+          opc_salida=0;
+          break;
+        }
+      }
+      else {
+        switch(opc_salida){
+          case 2:
+          opc_salida=3;
+          Serial.println("Opcion sonido");
+          break;
+          case 3:
+          opc_salida=0;
+          Serial.println("apagado");
+          break;
+          case 0:
+          opc_salida=2;
+          Serial.println("apagado");
+          break;
+          default:
+          opc_salida=0;
+          break;
+        }
     }
+    delay(20);
   }
   else if(val_pulsador == HIGH&&mem==true){
     mem=false;
+    cont_vibrar=0;
   }
+}
 }
  
 void setup() {
@@ -76,9 +106,6 @@ void setup() {
   pinMode(pul_opcion_salida, INPUT_PULLUP);
   delay(1000);
   int tickEvent = t.every(time_obt_dist,obt_dist);
-
-
-  
 }
  
 void loop() {
@@ -86,7 +113,7 @@ void loop() {
   t.update();
   selec_opc_salida();
   switch(opc_salida){
-    case 1:
+    case 2:
     if(dist_ultrasonico>1&&dist_ultrasonico<=lim_max_dist){
       on_motor_vibrar(70);//255-0.7*dist_ultrasonico);
       off_buzzer();
@@ -97,7 +124,7 @@ void loop() {
       off_buzzer();
     }
     break;
-    case 2:
+    case 1:
     if(dist_ultrasonico>1&&dist_ultrasonico<=lim_max_dist){
       off_motor_vibrar();
       pitido();
@@ -140,6 +167,8 @@ void obt_dist(){
   Serial.println(conta);  
   conta+=1;
   if(conta>=12) conta=0;
+
+  cont_vibrar++;
 
   
 }
