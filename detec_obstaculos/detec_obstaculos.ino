@@ -32,6 +32,7 @@ volatile unsigned int mem2=0;
 
 volatile int cont_vibrar=0;
 volatile bool funcion=false;
+volatile bool puls_aplastado=false;
  
 /*Crear el objeto de la clase NewPing*/
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -44,17 +45,10 @@ void selec_opc_salida(){
     val_pulsador = digitalRead(pul_opcion_salida);  //lectura de pulsador
     if (val_pulsador== LOW)
     {
+      Serial.println("Aplastado");
+      puls_aplastado=true;
       mem=true;
-      if(cont_vibrar>=30 && funcion==false){
-        funcion=true;
-        cont_vibrar=0;
-        
-      }
-      else if(cont_vibrar>=30 && funcion==true){
-        funcion=false;
-        cont_vibrar=0;
-      }
-
+      
       if (funcion==false){
         switch(opc_salida){
           case 0:
@@ -63,7 +57,7 @@ void selec_opc_salida(){
           break;
           case 1:
           opc_salida=0;
-          Serial.println("apagado");
+          Serial.println("apagado1");
           break;
           default:
           opc_salida=0;
@@ -74,15 +68,15 @@ void selec_opc_salida(){
         switch(opc_salida){
           case 2:
           opc_salida=3;
-          Serial.println("Opcion sonido");
+          Serial.println("Opcion sonido vibrar");
           break;
           case 3:
           opc_salida=0;
-          Serial.println("apagado");
+          Serial.println("Apagado 2");
           break;
           case 0:
           opc_salida=2;
-          Serial.println("apagado");
+          Serial.println("Opcion vibrar");
           break;
           default:
           opc_salida=0;
@@ -91,11 +85,13 @@ void selec_opc_salida(){
     }
     delay(20);
   }
+  }
   else if(val_pulsador == HIGH&&mem==true){
     mem=false;
     cont_vibrar=0;
+    Serial.println("Suelto");
+    puls_aplastado=false;
   }
-}
 }
  
 void setup() {
@@ -161,16 +157,33 @@ void obt_dist(){
   // Obtener medicion de tiempo de viaje del sonido y guardar en variable uS
   dist_ultrasonico = (sonar.ping_median())/US_ROUNDTRIP_CM;
  
-  Serial.print("Dist: ");
+  /*Serial.print("Dist: ");
   Serial.print(dist_ultrasonico);
   Serial.print("ontador: ");
-  Serial.println(conta);  
+  Serial.println(conta);*/  
   conta+=1;
-  if(conta>=12) conta=0;
+  if(conta>=12) conta=0;    //Contador de buzzer
 
-  cont_vibrar++;
-
-  
+  ////Selecccion de funciones
+  if(puls_aplastado==true){
+    cont_vibrar++;
+    Serial.println(cont_vibrar);
+    if(cont_vibrar>=30 && funcion==false){
+        funcion=true;
+        cont_vibrar=0;
+        Serial.println("Cambio a funcion Vibrar");  
+        cambio_funcion();
+        opc_salida=0;
+            
+    }
+    else if(cont_vibrar>=30 && funcion==true){
+        funcion=false;
+        cont_vibrar=0;
+        Serial.println("Cambio a funcion Sonido");
+        cambio_funcion();
+        opc_salida=0;
+    }
+  }
 }
 
 void on_motor_vibrar(int valor){
@@ -185,6 +198,16 @@ void on_buzzer(){
 }
 void off_buzzer(){
   analogWrite(sal_buzzer,0);
+}
+
+void cambio_funcion(){
+  analogWrite(sal_buzzer, 100);
+  delay(500);
+  off_buzzer();
+  delay(100);
+  analogWrite(sal_buzzer, 100);
+  delay(500);
+  off_buzzer();
 }
 
 void pitido(){
