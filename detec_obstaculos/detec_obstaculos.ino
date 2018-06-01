@@ -28,7 +28,7 @@ volatile bool mem=false;
 volatile bool mem_c=false;
 volatile bool mem_m=false;
 volatile bool mem_l=false;
-volatile unsigned int mem2=0;
+volatile unsigned int mem2=2;
 
 volatile int cont_vibrar=0;
 volatile bool funcion=false;
@@ -83,7 +83,7 @@ void selec_opc_salida(){
           break;
         }
     }
-    delay(20);
+    delay(40);
   }
   }
   else if(val_pulsador == HIGH&&mem==true){
@@ -116,7 +116,6 @@ void loop() {
     }
     else{
       off_motor_vibrar();
-      mem2=0;
       off_buzzer();
     }
     break;
@@ -127,7 +126,6 @@ void loop() {
     }
     else {
       off_motor_vibrar();
-      mem2=0;
       off_buzzer();
     }
     break;
@@ -138,14 +136,12 @@ void loop() {
     }
     else {
       off_motor_vibrar();
-      mem2=0;
       off_buzzer();
     }
     break;
     case 0:
     off_motor_vibrar();
     off_buzzer();
-    mem2=0;
     break;
     default:
     Serial.println("Error de opcion");
@@ -156,13 +152,55 @@ void loop() {
 void obt_dist(){
   // Obtener medicion de tiempo de viaje del sonido y guardar en variable uS
   dist_ultrasonico = (sonar.ping_median())/US_ROUNDTRIP_CM;
- 
-  /*Serial.print("Dist: ");
-  Serial.print(dist_ultrasonico);
-  Serial.print("ontador: ");
-  Serial.println(conta);*/  
+  
+  /*Serial.print(mem2);
+  Serial.print("  , Dist: ");
+  Serial.println(dist_ultrasonico);*/
+
   conta+=1;
-  if(conta>=12) conta=0;    //Contador de buzzer
+  if(conta==6){
+    switch(mem2){
+      case 0:
+      if (dist_ultrasonico>=50&&dist_ultrasonico<100){
+        mem2=1;
+        conta=0;
+      }
+      else if (dist_ultrasonico>=100&&dist_ultrasonico<150){
+        mem2=2;
+        conta=0;
+      }
+      break;
+      
+      case 1:
+      if (dist_ultrasonico>1&&dist_ultrasonico<50){
+        mem2=0;
+        conta=0;
+      }
+      else if (dist_ultrasonico>=100&&dist_ultrasonico<150){
+        mem2=2;
+        conta=0;
+      }
+      break;
+
+      case 2:
+      if (dist_ultrasonico>1&&dist_ultrasonico<50){
+        mem2=0;
+        conta=0;
+      }
+      else if (dist_ultrasonico>=50&&dist_ultrasonico<100){
+        mem2=1;
+        conta=0;
+      }
+      break;
+    }
+  }
+  
+  if(conta>=12){
+    if(dist_ultrasonico>1&&dist_ultrasonico<50) mem2=0;
+    else if (dist_ultrasonico>=50&&dist_ultrasonico<100) mem2=1;
+    else if (dist_ultrasonico>=100&&dist_ultrasonico<150) mem2=2;
+    conta=0;    //Contador de buzzer
+  }
 
   ////Selecccion de funciones
   if(puls_aplastado==true){
@@ -211,12 +249,8 @@ void cambio_funcion(){
 }
 
 void pitido(){
-  if(dist_ultrasonico>=1&&dist_ultrasonico<50){
-    if(mem2!=1){
-      conta=0;
-      mem2=1;
-    }
-      switch (conta){
+  if(mem2==0){
+    switch (conta){
       case 0:
         on_buzzer(); 
       break;
@@ -252,17 +286,11 @@ void pitido(){
       break;
       case 11:
         off_buzzer();
-      break;
-    
+      break;  
     }
   }
-  else if(dist_ultrasonico>=50 && dist_ultrasonico<100)
-  {
-     if(mem2!=2){
-      conta=0;
-      mem2=2;
-     }
-      switch (conta){
+  else if(mem2==1){
+    switch (conta){
       case 0:
         on_buzzer(); 
       break;
@@ -289,13 +317,9 @@ void pitido(){
       break;
     }
   }
-  else if(dist_ultrasonico>=100 && dist_ultrasonico<=150)
+  else if(mem2==2)
   {
-      if(mem2!=3){
-      conta=0;
-      mem2=3;
-      }
-      switch (conta){
+    switch (conta){
       case 0:
         on_buzzer(); 
       break;
